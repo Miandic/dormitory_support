@@ -6,7 +6,7 @@ def start_kb(user_telegram_id: int):
     kb_list = []
     
     kb_list.append([InlineKeyboardButton(text='Социльная👨‍👩‍👧‍👦', callback_data='category_social'), InlineKeyboardButton(text='Бытовая🎮', callback_data='category_household')])
-    kb_list.append([InlineKeyboardButton(text='Конфликтная ситуация😡', callback_data='category_conflict')])
+    #kb_list.append([InlineKeyboardButton(text='Конфликтная ситуация😡', callback_data='category_conflict')])
     kb_list.append([InlineKeyboardButton(text='Неисправности мебели/оборудования🏚', callback_data='category_corruption')])
     kb_list.append([InlineKeyboardButton(text='Прочее🤷‍♂️', callback_data='category_other')])
     
