@@ -64,10 +64,10 @@ async def show_team(call: CallbackQuery, state: FSMContext):
 async def process_name(message: Message, state: FSMContext):
     if not message.from_user.username:
         #link='tg://openmessage?user_id=' + str(message.from_user.id)
-        state.update_data(username=('ID_' +  str(message.from_user.id)))
+        await state.update_data(username=('ID_' +  str(message.from_user.id)))
     else:
         #link='t.me/' + str(message.from_user.username)
-        state.update_data(username=message.from_user.username)
+        await state.update_data(username=message.from_user.username)
     
     await state.set_state(Form.question)    
     
