@@ -13,6 +13,7 @@ class Form(StatesGroup):
     category = State()
     username = State()
     question = State()
+    validation = State()
 
 start_router = Router()
 
@@ -57,7 +58,7 @@ async def show_team(call: CallbackQuery, state: FSMContext):
     formatted_message += '\n\nПожалуйста, опиши свою проблему подробнее:'
     #link = call.message.chat.id
     #formatted_message += '\n\ntg://openmessage?user_id=' + str(link)
-    await call.message.edit_text(formatted_message, reply_markup=change_kb(call.from_user.id))
+    await call.message.edit_text(formatted_message, reply_markup=change_kb())
 
 
 @start_router.message(Form.username)
@@ -78,12 +79,11 @@ async def process_usrname(message: Message, state: FSMContext):
 @start_router.message(Form.question)
 async def process_question_text(message: Message, state: FSMContext):  
     if not message.text:
-        await message.answer('Бот принимает только текстовые обращения.\nЕсли хочешь сменить категорию, нажми на кнопку нииже', reply_markup=change_kb(message.from_user.id))
+        await message.answer('Бот принимает только текстовые обращения.\nЕсли хочешь сменить категорию, нажми на кнопку нииже', reply_markup=change_kb())
         return
-    await state.update_data(name=message.text)
+    await state.update_data(question=message.text)
     data = await state.get_data()
     #print(data)
-    #reply_text = 'Категория: ' + data.get("category") +  '\n\nТекст обращения:\n' + message.text
     #link='tg://openmessage?user_id=' + str(message.from_user.id)
     if 'ID_' in str(data.get("username")):
         uid = str(data.get("username")).replace('ID_', '')
@@ -94,10 +94,21 @@ async def process_question_text(message: Message, state: FSMContext):
     #for id in admins:
     #    await bot.send_message(id, reply_text, reply_markup=link_kb(link))
 
-    await message.answer('Спасибо за обращение. Если хочешь оставить ещё, вернись на главную', reply_markup=change_kb(message.from_user.id))
+    reply_text = 'Вот твоё обращение:\n\nКатегория: ' + data.get("category") +  '\n\nТекст обращения:\n' + data.get("question") + '\n\nЕсли что-то не так, начни с начала'
+    
+    await message.answer(reply_text, reply_markup=is_valid_kb())
+    await state.set_state(Form.validation) 
+
+
+@start_router.callback_query(F.data == 'correct', Form.validation)
+async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text('Спасибо за обращение, ваш запрос передан на рассмотрение!', reply_markup=change_kb())
     await state.clear()
 
 
+@start_router.callback_query(F.data == 'incorrect', Form.validation)
+async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
+    await cmd_start(call, state)
 
 
 @start_router.callback_query(F.data == 'Admin')
