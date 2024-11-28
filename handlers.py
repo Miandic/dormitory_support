@@ -61,7 +61,7 @@ async def show_team(call: CallbackQuery, state: FSMContext):
 
 
 @start_router.message(Form.username)
-async def process_name(message: Message, state: FSMContext):
+async def process_usrname(message: Message, state: FSMContext):
     if not message.from_user.username:
         #link='tg://openmessage?user_id=' + str(message.from_user.id)
         await state.update_data(username=('ID_' +  str(message.from_user.id)))
@@ -71,36 +71,19 @@ async def process_name(message: Message, state: FSMContext):
     
     await state.set_state(Form.question)    
     
-    if not message.text:
-        await message.answer('Бот принимает только текстовые обращения.\nЕсли хочешь сменить категорию, нажми на кнопку нииже', reply_markup=change_kb(message.from_user.id))
-        return
-    await state.update_data(name=message.text)
-    data = await state.get_data()
-    print(data)
-    reply_text = 'Категория: ' + data.get("category") +  '\n\nТекст обращения:\n' + message.text
-    #link='tg://openmessage?user_id=' + str(message.from_user.id)
-    if 'ID_' in str(data.get("username")):
-        uid = str(data.get("username")).replace('ID_', '')
-        link = 'tg://openmessage?user_id=' + uid
-    else:
-        link = 't.me/' + str(data.get("username"))
+    await process_question_text(message, state)
 
-    for id in admins:
-        await bot.send_message(id, reply_text, reply_markup=link_kb(link))
-
-    await message.answer('Спасибо за обращение. Если хочешь оставить ещё, вернись на главную', reply_markup=change_kb(message.from_user.id))
-    await state.clear()
 
 
 @start_router.message(Form.question)
-async def process_name(message: Message, state: FSMContext):  
+async def process_question_text(message: Message, state: FSMContext):  
     if not message.text:
         await message.answer('Бот принимает только текстовые обращения.\nЕсли хочешь сменить категорию, нажми на кнопку нииже', reply_markup=change_kb(message.from_user.id))
         return
     await state.update_data(name=message.text)
     data = await state.get_data()
-    print(data)
-    reply_text = 'Категория: ' + data.get("category") +  '\n\nТекст обращения:\n' + message.text
+    #print(data)
+    #reply_text = 'Категория: ' + data.get("category") +  '\n\nТекст обращения:\n' + message.text
     #link='tg://openmessage?user_id=' + str(message.from_user.id)
     if 'ID_' in str(data.get("username")):
         uid = str(data.get("username")).replace('ID_', '')
@@ -108,8 +91,8 @@ async def process_name(message: Message, state: FSMContext):
     else:
         link = 't.me/' + str(data.get("username"))
 
-    for id in admins:
-        await bot.send_message(id, reply_text, reply_markup=link_kb(link))
+    #for id in admins:
+    #    await bot.send_message(id, reply_text, reply_markup=link_kb(link))
 
     await message.answer('Спасибо за обращение. Если хочешь оставить ещё, вернись на главную', reply_markup=change_kb(message.from_user.id))
     await state.clear()
