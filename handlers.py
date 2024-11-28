@@ -11,6 +11,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 class Form(StatesGroup):
     category = State()
+    username = State()
     question = State()
 
 start_router = Router()
@@ -43,9 +44,6 @@ async def show_team(call: CallbackQuery, state: FSMContext):
     if category == 'household':
         formatted_message += 'бытовая🎮'
         await state.update_data(category='бытовая🎮')
-    if category == 'conflict':
-        formatted_message += 'конфликтная ситуация😡'
-        await state.update_data(category='конфликтная ситуация')
     if category == 'corruption':
         formatted_message += 'неисправности мебели/оборудования🏚'
         await state.update_data(category='неисправности мебели/оборудования')
@@ -53,7 +51,8 @@ async def show_team(call: CallbackQuery, state: FSMContext):
         formatted_message += 'прочее🤷‍♂️'
         await state.update_data(category='прочее🤷‍♂️')
 
-    await state.set_state(Form.question)
+    await state.set_state(Form.username)
+    #await state.set_state(Form.question)
 
     formatted_message += '\n\nПожалуйста, опиши свою проблему подробнее:'
     #link = call.message.chat.id
@@ -61,18 +60,61 @@ async def show_team(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(formatted_message, reply_markup=change_kb(call.from_user.id))
 
 
-@start_router.message(Form.question)
+@start_router.message(Form.username)
 async def process_name(message: Message, state: FSMContext):
+    if not message.from_user.username:
+        #link='tg://openmessage?user_id=' + str(message.from_user.id)
+        state.update_data(username=('ID_' +  str(message.from_user.id)))
+    else:
+        #link='t.me/' + str(message.from_user.username)
+        state.update_data(username=message.from_user.username)
+    
+    await state.set_state(Form.question)    
+    
+    if not message.text:
+        await message.answer('Бот принимает только текстовые обращения.\nЕсли хочешь сменить категорию, нажми на кнопку нииже', reply_markup=change_kb(message.from_user.id))
+        return
     await state.update_data(name=message.text)
-    categoty = await state.get_data()
-    reply_text = 'Категория: ' + categoty.get("category") +  '\n\nТекст обращения:\n' + message.text
-    link='tg://openmessage?user_id=' + str(message.from_user.id)
+    data = await state.get_data()
+    print(data)
+    reply_text = 'Категория: ' + data.get("category") +  '\n\nТекст обращения:\n' + message.text
+    #link='tg://openmessage?user_id=' + str(message.from_user.id)
+    if 'ID_' in str(data.get("username")):
+        uid = str(data.get("username")).replace('ID_', '')
+        link = 'tg://openmessage?user_id=' + uid
+    else:
+        link = 't.me/' + str(data.get("username"))
 
     for id in admins:
         await bot.send_message(id, reply_text, reply_markup=link_kb(link))
 
-    await message.answer('Спасибо за обращение. Если хочешь оставить ещё, вернись на главную /start', reply_markup=change_kb(message.from_user.id))
+    await message.answer('Спасибо за обращение. Если хочешь оставить ещё, вернись на главную', reply_markup=change_kb(message.from_user.id))
     await state.clear()
+
+
+@start_router.message(Form.question)
+async def process_name(message: Message, state: FSMContext):  
+    if not message.text:
+        await message.answer('Бот принимает только текстовые обращения.\nЕсли хочешь сменить категорию, нажми на кнопку нииже', reply_markup=change_kb(message.from_user.id))
+        return
+    await state.update_data(name=message.text)
+    data = await state.get_data()
+    print(data)
+    reply_text = 'Категория: ' + data.get("category") +  '\n\nТекст обращения:\n' + message.text
+    #link='tg://openmessage?user_id=' + str(message.from_user.id)
+    if 'ID_' in str(data.get("username")):
+        uid = str(data.get("username")).replace('ID_', '')
+        link = 'tg://openmessage?user_id=' + uid
+    else:
+        link = 't.me/' + str(data.get("username"))
+
+    for id in admins:
+        await bot.send_message(id, reply_text, reply_markup=link_kb(link))
+
+    await message.answer('Спасибо за обращение. Если хочешь оставить ещё, вернись на главную', reply_markup=change_kb(message.from_user.id))
+    await state.clear()
+
+
 
 
 @start_router.callback_query(F.data == 'Admin')
