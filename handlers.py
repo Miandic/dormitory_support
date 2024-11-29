@@ -3,11 +3,11 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.utils.chat_action import ChatActionSender
 from keyboards import *
-from bot_i import bot, admins
+from bot_i import bot, admins, pg_manager
+from sqlalchemy import Integer, String
 
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 class Form(StatesGroup):
     category = State()
@@ -17,8 +17,36 @@ class Form(StatesGroup):
 
 start_router = Router()
 
-
 start_text = 'Привет!\n\nЯ чат-бот, для решения проблем, возникающих в общежитии.\n\nВыбери, пожалуйста, категорию 🤔:'
+
+
+
+async def create_table_questions(table_name='questions_reg'):
+    async with pg_manager:
+        columns = [
+            {"name": "id", "type": Integer, "options": {"primary_key": True, "autoincrement": True}},
+            {"name": "category", "type": String},
+            {"name": "username", "type": String},
+            {"name": "question", "type": String},
+            {"name": "active", "type": String}]
+        await pg_manager.create_table(table_name=table_name, columns=columns)
+
+
+async def insert_table_questions(category: str, username: str, question: str, table_name='questions_reg'):
+    async with pg_manager:
+        users_info = {'category': category, 'username': username, 'question': question, 'active': 'True'}
+        await pg_manager.insert_data_with_update(table_name=table_name, records_data=users_info, conflict_column='id', update_on_conflict=True)
+
+
+async def get_table_questions():
+    async with pg_manager:
+        all_data = await pg_manager.select_data('questions_reg')
+        ret = []
+        for i in all_data:
+            if(i.get('solved') == False):
+                ret.append(i)
+        return ret
+
 
 @start_router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
@@ -44,13 +72,13 @@ async def show_team(call: CallbackQuery, state: FSMContext):
         await state.update_data(category='социльная')
     if category == 'household':
         formatted_message += 'бытовая🎮'
-        await state.update_data(category='бытовая🎮')
+        await state.update_data(category='бытовая')
     if category == 'corruption':
         formatted_message += 'неисправности мебели/оборудования🏚'
         await state.update_data(category='неисправности мебели/оборудования')
     if category == 'other':
         formatted_message += 'прочее🤷‍♂️'
-        await state.update_data(category='прочее🤷‍♂️')
+        await state.update_data(category='прочее')
 
     await state.set_state(Form.username)
     #await state.set_state(Form.question)
@@ -102,6 +130,13 @@ async def process_question_text(message: Message, state: FSMContext):
 
 @start_router.callback_query(F.data == 'correct', Form.validation)
 async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    reply_text = 'Новое обращение! Категория: ' + data.get('category')
+    for id in admins:
+        await bot.send_message(id, reply_text, reply_markup=None)
+    
+    await insert_table_questions(data.get('category'), data.get('username'), data.get('question'))
+
     await call.message.edit_text('Спасибо за обращение, ваш запрос передан на рассмотрение!', reply_markup=change_kb())
     await state.clear()
 
@@ -113,4 +148,24 @@ async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
 
 @start_router.callback_query(F.data == 'Admin')
 async def admin(call: CallbackQuery):
-    await call.message.edit_text('Я получил власть, которая и не снилась моему отцу!', reply_markup=admin_kb())
+    #await create_table_questions()
+    await call.message.edit_text('Получаю данные...', reply_markup=None)
+    cntrs = 0
+    cntrh = 0
+    cntrc = 0
+    cntro = 0
+    async with ChatActionSender.typing(bot=bot, chat_id=call.message.chat.id):
+        async with pg_manager:
+            all_data = await pg_manager.select_data('questions_reg', where_dict={'active': 'True'})
+            for i in all_data:
+                if i.get('category') == 'социльная':
+                    cntrs += 1
+                if i.get('category') == 'бытовая':
+                    cntrh += 1
+                if i.get('category') == 'неисправности мебели/оборудования':
+                    cntrc += 1
+                if i.get('category') == 'прочее':
+                    cntro += 1
+                print(i)
+    answer_text = '<b>Тикеты</b>\n\n' + 'Социальных: ' + str(cntrs) + '\nБытовых: ' + str(cntrh) + '\nМебель/оборудование: ' + str(cntrc) + '\nПрочие: ' + str(cntro) + '\n\nЧтобы посмотреть тикеты, выбери категорию'
+    await call.message.edit_text(answer_text, reply_markup=admin_kb())

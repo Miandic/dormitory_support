@@ -10,7 +10,7 @@ def start_kb(user_telegram_id: int):
     ]
 
     if user_telegram_id in admins:
-        kb_list.append([InlineKeyboardButton(text="⚙️ Админ панель", callback_data='Admin')])
+        kb_list.append([InlineKeyboardButton(text="⚙️Ответить на обращения", callback_data='Admin')])
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
     return keyboard
     
@@ -37,6 +37,9 @@ def is_valid_kb():
 
 def admin_kb():
     kb_list = [
+        [InlineKeyboardButton(text='Социльная👨‍👩‍👧‍👦', callback_data='admin_category_social'), InlineKeyboardButton(text='Бытовая🎮', callback_data='admin_category_household')],
+        [InlineKeyboardButton(text='Неисправности мебели/оборудования🏚', callback_data='admin_category_corruption')],
+        [InlineKeyboardButton(text='Прочее🤷‍♂️', callback_data='admin_category_other')],
         [InlineKeyboardButton(text="Вернуться назад", callback_data='Home')]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
