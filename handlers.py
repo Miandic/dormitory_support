@@ -169,3 +169,33 @@ async def admin(call: CallbackQuery):
                 print(i)
     answer_text = '<b>Тикеты</b>\n\n' + 'Социальных: ' + str(cntrs) + '\nБытовых: ' + str(cntrh) + '\nМебель/оборудование: ' + str(cntrc) + '\nПрочие: ' + str(cntro) + '\n\nЧтобы посмотреть тикеты, выбери категорию'
     await call.message.edit_text(answer_text, reply_markup=admin_kb())
+
+
+@start_router.callback_query(F.data.startswith('admin_category_'))
+async def show_tickets(call: CallbackQuery, state: FSMContext):
+    category = call.data.replace('admin_category_', '')
+    
+    async with pg_manager:
+        if category == 'social':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'социльная'})
+            
+        if category == 'household':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'бытовая'})
+            
+        if category == 'corruption':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'неисправности мебели/оборудования'})
+            
+        if category == 'other':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'прочее'})
+        
+    for i in data:
+        if 'ID_' in str(i.get("username")):
+            uid = str(i.get("username")).replace('ID_', '')
+            link = 'tg://openmessage?user_id=' + uid
+        else:
+            link = 't.me/' + str(i.get("username"))
+        reply_text = '<b>ID:' + str(i.get('id')) + '</b>\n\n' + str(i.get('question'))
+        
+        await call.message.answer(reply_text, reply_markup=answer_kb(int(i.get('id')), link))
+
+        
