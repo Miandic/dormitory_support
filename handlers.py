@@ -172,7 +172,7 @@ async def admin(call: CallbackQuery):
 
 
 @start_router.callback_query(F.data.startswith('admin_category_'))
-async def show_tickets(call: CallbackQuery, state: FSMContext):
+async def show_tickets(call: CallbackQuery):
     category = call.data.replace('admin_category_', '')
     
     async with pg_manager:
@@ -199,3 +199,17 @@ async def show_tickets(call: CallbackQuery, state: FSMContext):
         await call.message.answer(reply_text, reply_markup=answer_kb(int(i.get('id')), link))
 
         
+@start_router.callback_query(F.data.startswith('close_ticket_'))
+async def show_tickets(call: CallbackQuery):
+    ticket_id = call.data.replace('close_ticket_', '')
+    async with pg_manager:
+        i = await pg_manager.select_data('questions_reg', where_dict={'id': int(ticket_id)})
+        await pg_manager.delete_data(table_name='questions_reg', where_dict={'id': int(ticket_id)})
+    print(i)
+    if 'ID_' in str(i[0].get("username")):
+        uid = str(i[0].get("username")).replace('ID_', '')
+        link = 'tg://openmessage?user_id=' + uid
+    else:
+        link = 't.me/' + str(i[0].get("username"))
+    
+    await call.message.edit_text('Этот тикет закрыт', reply_markup=closed_ticket_kb(link))

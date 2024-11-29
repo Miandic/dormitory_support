@@ -46,10 +46,19 @@ def admin_kb():
     return keyboard
 
 
-def answer_kb(ticket_id: int, user_telegram_url:str):
+def answer_kb(ticket_id: int, user_telegram_url: str):
     kb_list = [
         [InlineKeyboardButton(text='Отправитель', url=user_telegram_url)],
         [InlineKeyboardButton(text='Закрыть тикет', callback_data=('close_ticket_' + str(ticket_id)))],
+        [InlineKeyboardButton(text="К тикетам", callback_data='Admin')]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
+    return keyboard
+
+
+def closed_ticket_kb(user_telegram_url: str):
+    kb_list = [
+        [InlineKeyboardButton(text='Отправитель', url=user_telegram_url)],
         [InlineKeyboardButton(text="К тикетам", callback_data='Admin')]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
