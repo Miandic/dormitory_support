@@ -194,8 +194,8 @@ async def show_tickets(call: CallbackQuery):
         else:
             link = 't.me/' + str(i.get("username"))
         reply_text = '<b>ID:' + str(i.get('id')) + '</b>\n\n' + str(i.get('question'))
-        
-        await call.message.answer(reply_text, reply_markup=answer_kb(int(i.get('id')), link))
+        if i.get('active') == 'True':
+            await call.message.answer(reply_text, reply_markup=answer_kb(int(i.get('id')), link))
 
         
 @start_router.callback_query(F.data.startswith('close_ticket_'))
