@@ -30,7 +30,7 @@ def link_kb(user_telegram_url: str):
 
 def is_valid_kb():
     kb_list = [
-        [InlineKeyboardButton(text="✅Все верно", callback_data='correct'), InlineKeyboardButton(text="❌Заполнить сначала", callback_data='incorrect')]
+        [InlineKeyboardButton(text="✅Все верно", callback_data='correct'), InlineKeyboardButton(text="❌Заново", callback_data='incorrect')]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
     return keyboard

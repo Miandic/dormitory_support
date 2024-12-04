@@ -20,7 +20,6 @@ start_router = Router()
 start_text = 'Привет!\n\nЯ чат-бот, для решения проблем, возникающих в общежитии.\n\nВыбери, пожалуйста, категорию 🤔:'
 
 
-
 async def create_table_questions(table_name='questions_reg'):
     async with pg_manager:
         columns = [
@@ -204,7 +203,8 @@ async def show_tickets(call: CallbackQuery):
     ticket_id = call.data.replace('close_ticket_', '')
     async with pg_manager:
         i = await pg_manager.select_data('questions_reg', where_dict={'id': int(ticket_id)})
-        await pg_manager.delete_data(table_name='questions_reg', where_dict={'id': int(ticket_id)})
+        i[0]['active'] = 'False'
+        await pg_manager.insert_data_with_update(table_name='questions_reg', records_data=i, conflict_column='id', update_on_conflict=True)
     print(i)
     if 'ID_' in str(i[0].get("username")):
         uid = str(i[0].get("username")).replace('ID_', '')
