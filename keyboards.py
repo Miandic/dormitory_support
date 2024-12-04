@@ -40,6 +40,7 @@ def admin_kb():
         [InlineKeyboardButton(text='Социльная👨‍👩‍👧‍👦', callback_data='admin_category_social'), InlineKeyboardButton(text='Бытовая🎮', callback_data='admin_category_household')],
         [InlineKeyboardButton(text='Неисправности мебели/оборудования🏚', callback_data='admin_category_corruption')],
         [InlineKeyboardButton(text='Прочее🤷‍♂️', callback_data='admin_category_other')],
+        [InlineKeyboardButton(text='Закрытые тикеты (история)', callback_data='admin_history_')],
         [InlineKeyboardButton(text="Вернуться назад", callback_data='Home')]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
@@ -55,6 +56,16 @@ def answer_kb(ticket_id: int, user_telegram_url: str):
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
     return keyboard
 
+def answer_kb_history(ticket_id: int, user_telegram_url: str):
+    kb_list = [
+        [InlineKeyboardButton(text='Отправитель', url=user_telegram_url)],
+        [InlineKeyboardButton(text='Восстановить тикет', callback_data=('reopen_ticket_' + str(ticket_id)))],
+        [InlineKeyboardButton(text='Удалить из истории (навсегда)', callback_data=('delete_ticket_' + str(ticket_id)))],
+        [InlineKeyboardButton(text="К тикетам", callback_data='Admin')]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
+    return keyboard
+
 
 def closed_ticket_kb(user_telegram_url: str):
     kb_list = [
@@ -63,3 +74,12 @@ def closed_ticket_kb(user_telegram_url: str):
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
     return keyboard
+
+
+def deleted_ticket_kb():
+    kb_list = [
+        [InlineKeyboardButton(text="К тикетам", callback_data='Admin')]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=kb_list)
+    return keyboard
+

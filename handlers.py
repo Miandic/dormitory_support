@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.chat_action import ChatActionSender
 from keyboards import *
-from bot_i import bot, admins, pg_manager
+from bot_i import bot, admins, banned, pg_manager
 from sqlalchemy import Integer, String
 
 
@@ -50,12 +50,22 @@ async def get_table_questions():
 @start_router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
+
+    if message.from_user.id in banned:
+        await message.edit_text('Ты в бане! По вопросам разбана пиши администратору :p', reply_markup=None)
+        return
+
     await message.answer(start_text, reply_markup=start_kb(message.from_user.id))
 
 
 @start_router.callback_query(F.data == 'Home')
 async def cmd_start(call: CallbackQuery, state: FSMContext):
     await state.clear()
+
+    if call.message.from_user.id in banned:
+        await call.message.edit_text('Ты в бане! По вопросам разбана пиши администратору :p', reply_markup=None)
+        return
+
     await call.message.edit_text(start_text, reply_markup=start_kb(call.from_user.id))
 
 
@@ -130,6 +140,11 @@ async def process_question_text(message: Message, state: FSMContext):
 @start_router.callback_query(F.data == 'correct', Form.validation)
 async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    if call.message.from_user.id in banned:
+        await call.message.edit_text('Ты в бане! По вопросам разбана пиши администратору :p', reply_markup=None)
+        await state.clear()
+        return
+    
     reply_text = 'Новое обращение! Категория: ' + data.get('category')
     for id in admins:
         await bot.send_message(id, reply_text, reply_markup=None)
@@ -213,3 +228,66 @@ async def show_tickets(call: CallbackQuery):
         link = 't.me/' + str(i[0].get("username"))
     
     await call.message.edit_text('Этот тикет закрыт', reply_markup=closed_ticket_kb(link))
+
+
+@start_router.callback_query(F.data.startswith('delete_ticket_'))
+async def show_tickets(call: CallbackQuery):
+    ticket_id = call.data.replace('delete_ticket_', '')
+    async with pg_manager:
+        i = await pg_manager.select_data('questions_reg', where_dict={'id': int(ticket_id)})
+        if i[0].get('active') == 'False':
+            await pg_manager.delete_data(table_name='questions_reg', where_dict={'id': int(ticket_id)})
+    print(i)
+    if 'ID_' in str(i[0].get("username")):
+        uid = str(i[0].get("username")).replace('ID_', '')
+        link = 'tg://openmessage?user_id=' + uid
+    else:
+        link = 't.me/' + str(i[0].get("username"))
+    
+    await call.message.edit_text('Этот тикет удалён из истории', reply_markup=deleted_ticket_kb())
+
+
+@start_router.callback_query(F.data.startswith('reopen_ticket_'))
+async def show_tickets(call: CallbackQuery):
+    ticket_id = call.data.replace('reopen_ticket_', '')
+    async with pg_manager:
+        i = await pg_manager.select_data('questions_reg', where_dict={'id': int(ticket_id)})
+        i[0]['active'] = 'True'
+        await pg_manager.insert_data_with_update(table_name='questions_reg', records_data=i, conflict_column='id', update_on_conflict=True)
+    print(i)
+    if 'ID_' in str(i[0].get("username")):
+        uid = str(i[0].get("username")).replace('ID_', '')
+        link = 'tg://openmessage?user_id=' + uid
+    else:
+        link = 't.me/' + str(i[0].get("username"))
+    
+    await call.message.edit_text('Этот тикет восстановлен', reply_markup=answer_kb(int(i[0].get('id')), link))
+
+
+@start_router.callback_query(F.data.startswith('admin_history_'))
+async def show_tickets(call: CallbackQuery):
+    #category = call.data.replace('admin_history_', '')
+    
+    async with pg_manager:
+        '''if category == 'social':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'социльная'})
+            
+        if category == 'household':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'бытовая'})
+            
+        if category == 'corruption':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'неисправности мебели/оборудования'})
+            
+        if category == 'other':
+            data = await pg_manager.select_data('questions_reg', where_dict={'category': 'прочее'})'''
+        data = await pg_manager.select_data('questions_reg', where_dict={'active': 'False'})
+        
+    for i in data:
+        if 'ID_' in str(i.get("username")):
+            uid = str(i.get("username")).replace('ID_', '')
+            link = 'tg://openmessage?user_id=' + uid
+        else:
+            link = 't.me/' + str(i.get("username"))
+        reply_text = '<b>ID:' + str(i.get('id')) + '</b>\n\n' + str(i.get('question'))
+        
+        await call.message.answer(reply_text, reply_markup=answer_kb_history(int(i.get('id')), link))

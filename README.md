@@ -33,6 +33,6 @@ ROOT_PASS=<Server root password>
 - [ ] Ban users from admin menu
 - [ ] Subscribe / unsubscribe from notifications by category
 - [ ] Anonymous questions category with timeout by id
-- [ ] Closed tickets history
+- [x] Closed tickets history
 - [ ] Some interface tweaks (better syntax, text highlighting, emoji, etc)  
 - [ ] Integrate AI to analyse ticket and suggest quick answer (need to create prompt with basic knowledge before)
