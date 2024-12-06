@@ -151,7 +151,7 @@ async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
     
     await insert_table_questions(data.get('category'), data.get('username'), data.get('question'))
 
-    await call.message.edit_text('Спасибо за обращение, ваш запрос передан на рассмотрение! Скоро с тобой свяэется один из админов и поможет решить твои вопросы :)', reply_markup=change_kb())
+    await call.message.edit_text('Спасибо за обращение, ваш запрос передан на рассмотрение! Скоро с тобой свяжется один из админов и поможет решить твои вопросы :)', reply_markup=change_kb())
     await state.clear()
 
 
