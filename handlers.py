@@ -52,7 +52,7 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
 
     if message.from_user.id in banned:
-        await message.edit_text('Ты в бане! По вопросам разбана пиши администратору :p', reply_markup=None)
+        await message.edit_text('Ты в бане! По вопросам разбана пиши администратору :P', reply_markup=None)
         return
 
     await message.answer(start_text, reply_markup=start_kb(message.from_user.id))
@@ -63,7 +63,7 @@ async def cmd_start(call: CallbackQuery, state: FSMContext):
     await state.clear()
 
     if call.message.from_user.id in banned:
-        await call.message.edit_text('Ты в бане! По вопросам разбана пиши администратору :p', reply_markup=None)
+        await call.message.edit_text('Ты в бане! По вопросам разбана пиши администратору :P', reply_markup=None)
         return
 
     await call.message.edit_text(start_text, reply_markup=start_kb(call.from_user.id))
@@ -141,7 +141,7 @@ async def process_question_text(message: Message, state: FSMContext):
 async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     if call.message.from_user.id in banned:
-        await call.message.edit_text('Ты в бане! По вопросам разбана пиши администратору :p', reply_markup=None)
+        await call.message.edit_text('Ты в бане! По вопросам разбана пиши администратору :P', reply_markup=None)
         await state.clear()
         return
     
@@ -151,7 +151,7 @@ async def start_questionnaire_process(call: CallbackQuery, state: FSMContext):
     
     await insert_table_questions(data.get('category'), data.get('username'), data.get('question'))
 
-    await call.message.edit_text('Спасибо за обращение, ваш запрос передан на рассмотрение!', reply_markup=change_kb())
+    await call.message.edit_text('Спасибо за обращение, ваш запрос передан на рассмотрение! Скоро с тобой свяэется один из админов и поможет решить твои вопросы :)', reply_markup=change_kb())
     await state.clear()
 
 
